@@ -1,0 +1,150 @@
+[
+    {
+        "nome": "Wicked",
+        "adicionado_por": "zerotig",
+        "assistido": true
+    },
+    {
+        "nome": "Look Back",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "big bad fox",
+        "adicionado_por": "zerotig",
+        "assistido": true
+    },
+    {
+        "nome": "Alien 3",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "Fantastic Mr. Fox",
+        "adicionado_por": "spuddddddd",
+        "assistido": false
+    },
+    {
+        "nome": "Sonic The Hedgehog",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "sonhos roubados",
+        "adicionado_por": "jukyfoxxo",
+        "assistido": false
+    },
+    {
+        "nome": "A Wolf At The Door",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "Friendly Beast",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "Reflections of a Blender",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "Perfect Blue",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "The Second Mother",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "Nosferatu",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "Anora",
+        "adicionado_por": "zerotig",
+        "assistido": false
+    },
+    {
+        "nome": "Charlie's Angels",
+        "adicionado_por": "twhaira",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BYTkyYjRiZGMtYzA0Mi00N2IyLThhZDAtYWU1OWNhNjIxNzY5XkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Taxi Driver",
+        "adicionado_por": "twhaira",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BZDNhMGYwM2UtMTdlZS00MGQ1LWI2YzAtODY5YWI1MjYyNzRmXkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Emilia Pérez",
+        "adicionado_por": "lemonwoof",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BNjBhMWVmYjQtYmI2NC00NjdiLTliMjQtODliYjI5OTZmMzczXkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Ghost: Do Outro Lado da Vida",
+        "adicionado_por": "zerotig",
+        "assistido": false,
+        "capa": null
+    },
+    {
+        "nome": "Ben 10: Alien Swarm",
+        "adicionado_por": "zerotig",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BMTc3ODA3ODY0NV5BMl5BanBnXkFtZTcwOTA3MzAwMw@@._V1_SX300.jpg"
+    },
+    {
+        "nome": "a morte te dá parabens",
+        "adicionado_por": "zerotig",
+        "assistido": false,
+        "capa": null
+    },
+    {
+        "nome": "Subservience",
+        "adicionado_por": "zerotig",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BMjdlNjNlODEtYjA1OS00MDgzLWJiNTMtMDVlMWMyOGM5ZDhkXkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "The Fly",
+        "adicionado_por": "spuddddddd",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BOTBlNTliNTItY2VhNS00MjA5LTllYzItMmQyNGRjYTAyZWQxXkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Companion",
+        "adicionado_por": "zerotig",
+        "assistido": true,
+        "capa": "https://m.media-amazon.com/images/M/MV5BYjkyZTA5NzAtYWU3Zi00MWM4LTgxNzAtNDQxY2JmNjMwYjk4XkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Conclave",
+        "adicionado_por": "antcpz_",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BYjgxMDI5NmMtNTU3OS00ZDQxLTgxZmEtNzY1ZTBmMDY4NDRkXkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Jennifer's Body",
+        "adicionado_por": "zerotig",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BMTMxNzYwMjc1Ml5BMl5BanBnXkFtZTcwNDI3MDE3Mg@@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Dancer in the Dark",
+        "adicionado_por": "zerotig",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BMDg3NWFlYWEtZjQ3Ny00Y2ZjLWI3ZWYtN2ZmMDA4MThkZTg2XkEyXkFqcGc@._V1_SX300.jpg"
+    },
+    {
+        "nome": "Tár",
+        "adicionado_por": "zerotig",
+        "assistido": false,
+        "capa": "https://m.media-amazon.com/images/M/MV5BYWY5YThhOGUtNDU4OS00NTk3LWI0ODQtNmRiYTk0ZjVkZWU2XkEyXkFqcGc@._V1_SX300.jpg"
+    }
+]
