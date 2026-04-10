@@ -1,14 +1,14 @@
 import os
 from dotenv import load_dotenv
-import discord
-from discord.ext import commands
 
-# Carregar variáveis do .env
 load_dotenv()
+
 TOKEN = os.getenv("DISCORD_TOKEN")
-OMDB_API_KEY = os.getenv("OMDB_API_KEY")    
-
-intents = discord.Intents.default()  # Create default intents
-intents.message_content = True  # Enable message content if needed
-
-bot = commands.Bot(command_prefix="!", intents=intents)  # Pass intents
+OMDB_API_KEY = os.getenv("OMDB_API_KEY")
+DB_PATH = "tigreflix.db"
+if not TOKEN:
+    raise ValueError("DISCORD_TOKEN não encontrado no arquivo .env")
+if not OMDB_API_KEY:
+    raise ValueError("OMDB_API_KEY não encontrado no arquivo .env")
+if not DB_PATH:
+    raise ValueError("DB_PATH não encontrado no arquivo .env")

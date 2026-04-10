@@ -1,1 +1,14 @@
 .env
+__pycache__/
+*.pyc
+*.pyo  
+.venv/
+venv/
+env/
+*.log
+*.sqlite3
+*.db
+*.bak
+*.backup
+*.swp  
+filmes.json.migrado
