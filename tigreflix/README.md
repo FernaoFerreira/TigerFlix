@@ -19,7 +19,6 @@ tigreflix/
 ```bash
 pip install -r requirements.txt
 ```
-
 Crie um arquivo `.env` na raiz do projeto:
 
 ```

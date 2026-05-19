@@ -1,20 +1,19 @@
-import asyncio
 import time
-from random import choice
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View
 
-from tigreflix.database import (
-    add_movie,
-    find_movie,
-    list_movies,
-    mark_watched,
-    remove_movie,
+from tigreflix.services.movieservice import (
+    add_movie_to_list,
+    get_movie_details_by_title,
+    get_movie_list,
+    mark_movie_as_watched,
+    remove_movie_from_list,
+    search_and_select_movie,
+    suggest_unwatched_movie,
 )
-from tigreflix.movie_api import get_movie_details, search_movies
 
 
 # ── View de seleção ──────────────────────────────────────────────────────────
@@ -43,26 +42,16 @@ class SelecionarFilmeView(View):
         filme_escolhido = self.resultados[index]
         chosen_title = filme_escolhido["Title"]
 
-        # Verifica duplicata antes de chamar a API de detalhes
-        if find_movie(chosen_title):
-            await interaction.response.edit_message(
-                content=f'⚠️ "**{chosen_title}**" já está na lista!', embed=None, view=None
-            )
-            return
-
         await interaction.response.defer()
 
-        detalhes = get_movie_details(chosen_title)
-        if not detalhes:
-            await interaction.followup.send("⚠️ Não foi possível obter detalhes do filme.", ephemeral=True)
+        success, result = add_movie_to_list(chosen_title, interaction.user.name)
+
+        if not success:
+            await interaction.followup.send(f"⚠️ {result}", ephemeral=True)
             return
 
+        detalhes = result
         poster = detalhes.get("Poster") if detalhes.get("Poster") != "N/A" else None
-        added = add_movie(detalhes["Title"], interaction.user.name, poster)
-
-        if not added:
-            await interaction.followup.send(f'⚠️ "**{detalhes["Title"]}**" já está na lista!', ephemeral=True)
-            return
 
         embed = discord.Embed(
             title=f'🎬 {detalhes["Title"]} adicionado!',
@@ -99,7 +88,7 @@ class MovieCommands(commands.Cog):
         if cached and now < cached[1]:
             movies = cached[0]
         else:
-            movies = search_movies(current)
+            movies = search_and_select_movie(current)
             self._cache[current] = (movies, now + 300)
         return [
             app_commands.Choice(name=f"{m['Title']} ({m['Year']})", value=m["Title"])
@@ -118,7 +107,7 @@ class MovieCommands(commands.Cog):
 
         await ctx.defer()
 
-        resultados = search_movies(query)
+        resultados = search_and_select_movie(query)
         if not resultados:
             await ctx.send("⚠️ Nenhum filme encontrado.", ephemeral=True)
             return
@@ -135,7 +124,7 @@ class MovieCommands(commands.Cog):
 
     @commands.hybrid_command(name="listar", description="Lista todos os filmes")
     async def listar(self, ctx: commands.Context):
-        filmes = list_movies()
+        filmes = get_movie_list()
         if not filmes:
             await ctx.send("🎬 Nenhum filme adicionado ainda!", ephemeral=True)
             return
@@ -164,7 +153,7 @@ class MovieCommands(commands.Cog):
     @commands.hybrid_command(name="remover", description="Remove um filme da lista")
     @app_commands.describe(filme="Nome do filme a remover")
     async def remover(self, ctx: commands.Context, *, filme: str):
-        if remove_movie(filme):
+        if remove_movie_from_list(filme):
             await ctx.send(f'🗑️ "**{filme}**" removido com sucesso!')
         else:
             await ctx.send(f'⚠️ "**{filme}**" não encontrado na lista.', ephemeral=True)
@@ -174,7 +163,7 @@ class MovieCommands(commands.Cog):
     @commands.hybrid_command(name="assistido", description="Marca um filme como assistido")
     @app_commands.describe(filme="Nome do filme a marcar")
     async def assistido(self, ctx: commands.Context, *, filme: str):
-        if mark_watched(filme):
+        if mark_movie_as_watched(filme):
             await ctx.send(f'✅ "**{filme}**" marcado como assistido!')
         else:
             await ctx.send(f'⚠️ "**{filme}**" não encontrado na lista.', ephemeral=True)
@@ -183,13 +172,11 @@ class MovieCommands(commands.Cog):
 
     @commands.hybrid_command(name="sortear", description="Sorteia um filme não assistido")
     async def sortear(self, ctx: commands.Context):
-        filmes = list_movies()
-        nao_assistidos = [f for f in filmes if not f["watched"]]
-        if not nao_assistidos:
+        sorteado = suggest_unwatched_movie()
+        if not sorteado:
             await ctx.send("⚠️ Todos os filmes já foram assistidos! Adicione mais.", ephemeral=True)
             return
 
-        sorteado = choice(nao_assistidos)
         embed = discord.Embed(
             title="🎲 Filme Sorteado!",
             description=f'**{sorteado["title"]}**\nAdicionado por {sorteado["added_by"]}',
@@ -206,7 +193,7 @@ class MovieCommands(commands.Cog):
     @app_commands.describe(filme="Nome do filme")
     async def infofilme(self, ctx: commands.Context, *, filme: str):
         await ctx.defer()
-        detalhes = get_movie_details(filme)  # ← bug corrigido: usa get_movie_details, não search_movies
+        detalhes = get_movie_details_by_title(filme)
 
         if not detalhes:
             await ctx.send(f'⚠️ Não encontrei detalhes para "**{filme}**".', ephemeral=True)
