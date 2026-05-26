@@ -1,7 +1,7 @@
 .env
 __pycache__/
 *.pyc
-*.pyo  
+*.pyo
 .venv/
 venv/
 env/
@@ -10,8 +10,5 @@ env/
 *.db
 *.bak
 *.backup
-*.swp  
+*.swp
 filmes.json.migrado
-__pycache__/
-*.pyc
-*.pyo
