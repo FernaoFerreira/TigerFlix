@@ -5,7 +5,7 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
-DB_PATH = "tigreflix.db"
+DB_PATH = os.getenv("DB_PATH", "tigreflix.db")
 if not TOKEN:
     raise ValueError("DISCORD_TOKEN não encontrado no arquivo .env")
 if not OMDB_API_KEY:

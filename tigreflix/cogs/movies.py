@@ -5,6 +5,13 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View
 
+from tigreflix.exceptions import (
+    MovieAlreadyExistsError,
+    MovieDetailsNotFoundError,
+    MovieNotFoundError,
+    NoUnwatchedMoviesError,
+    PermissionDeniedError,
+)
 from tigreflix.services.movieservice import (
     add_movie_to_list,
     get_movie_details_by_title,
@@ -19,10 +26,16 @@ from tigreflix.services.movieservice import (
 # ── View de seleção ──────────────────────────────────────────────────────────
 
 class SelecionarFilmeView(View):
-    def __init__(self, resultados: list[dict], author: discord.User | discord.Member):
+    def __init__(
+        self,
+        resultados: list[dict],
+        author: discord.User | discord.Member,
+        guild_id: int,
+    ):
         super().__init__(timeout=30)
         self.resultados = resultados
         self.author = author
+        self.guild_id = guild_id
         # Cria botões dinamicamente conforme quantidade de resultados
         for i in range(len(resultados)):
             btn = Button(label=str(i + 1), style=discord.ButtonStyle.primary, custom_id=str(i))
@@ -44,13 +57,30 @@ class SelecionarFilmeView(View):
 
         await interaction.response.defer()
 
-        success, result = add_movie_to_list(chosen_title, interaction.user.name)
-
-        if not success:
-            await interaction.followup.send(f"⚠️ {result}", ephemeral=True)
+        if interaction.guild is None:
+            await interaction.followup.send(
+                "⚠️ Use este bot dentro de um servidor Discord.", ephemeral=True
+            )
             return
 
-        detalhes = result
+        try:
+            detalhes = add_movie_to_list(
+                self.guild_id, chosen_title, interaction.user.id
+            )
+        except MovieNotFoundError:
+            await interaction.followup.send("⚠️ Nenhum filme encontrado.", ephemeral=True)
+            return
+        except MovieAlreadyExistsError as error:
+            await interaction.followup.send(
+                f'⚠️ "**{error.title}**" já está na lista!', ephemeral=True
+            )
+            return
+        except MovieDetailsNotFoundError:
+            await interaction.followup.send(
+                "⚠️ Não foi possível obter detalhes do filme.", ephemeral=True
+            )
+            return
+
         poster = detalhes.get("Poster") if detalhes.get("Poster") != "N/A" else None
 
         embed = discord.Embed(
@@ -77,6 +107,21 @@ class MovieCommands(commands.Cog):
         self.bot = bot
         self._cache: dict[str, tuple[list, float]] = {}
 
+    async def _require_guild(self, ctx: commands.Context) -> int | None:
+        if ctx.guild is None:
+            await ctx.send(
+                "⚠️ Use este bot dentro de um servidor Discord.", ephemeral=True
+            )
+            return None
+        return ctx.guild.id
+
+    @staticmethod
+    def _added_by_text(movie: dict) -> str:
+        discord_id = movie.get("added_by_discord_id")
+        if discord_id:
+            return f"<@{discord_id}>"
+        return movie["added_by"]
+
     # Autocomplete compartilhado
     async def movie_autocomplete(
         self, interaction: discord.Interaction, current: str
@@ -101,6 +146,10 @@ class MovieCommands(commands.Cog):
     @app_commands.describe(query="Nome do filme que você quer adicionar")
     @app_commands.autocomplete(query=movie_autocomplete)
     async def addfilme(self, ctx: commands.Context, *, query: str):
+        guild_id = await self._require_guild(ctx)
+        if guild_id is None:
+            return
+
         if len(query) > 100:
             await ctx.send("⚠️ Nome muito longo (máx. 100 caracteres).", ephemeral=True)
             return
@@ -117,14 +166,18 @@ class MovieCommands(commands.Cog):
         for i, m in enumerate(resultados, 1):
             embed.add_field(name=f"{i}. {m['Title']} ({m['Year']})", value="\u200b", inline=False)
 
-        view = SelecionarFilmeView(resultados, ctx.author)
+        view = SelecionarFilmeView(resultados, ctx.author, guild_id)
         await ctx.send(embed=embed, view=view)
 
     # ── /listar ──────────────────────────────────────────────────────────────
 
     @commands.hybrid_command(name="listar", description="Lista todos os filmes")
     async def listar(self, ctx: commands.Context):
-        filmes = get_movie_list()
+        guild_id = await self._require_guild(ctx)
+        if guild_id is None:
+            return
+
+        filmes = get_movie_list(guild_id)
         if not filmes:
             await ctx.send("🎬 Nenhum filme adicionado ainda!", ephemeral=True)
             return
@@ -136,13 +189,14 @@ class MovieCommands(commands.Cog):
 
         if nao_assistidos:
             linhas = "\n".join(
-                f"🔹 *{f['title']}* (por {f['added_by']})" for f in nao_assistidos
+                f"🔹 *{f['title']}* (por {self._added_by_text(f)})"
+                for f in nao_assistidos
             )
             embed.add_field(name=f"📌 Para assistir ({len(nao_assistidos)})", value=linhas, inline=False)
 
         if assistidos:
             linhas = "\n".join(
-                f"✔️ *{f['title']}* (por {f['added_by']})" for f in assistidos
+                f"✔️ *{f['title']}* (por {self._added_by_text(f)})" for f in assistidos
             )
             embed.add_field(name=f"✅ Já assistidos ({len(assistidos)})", value=linhas, inline=False)
 
@@ -153,9 +207,20 @@ class MovieCommands(commands.Cog):
     @commands.hybrid_command(name="remover", description="Remove um filme da lista")
     @app_commands.describe(filme="Nome do filme a remover")
     async def remover(self, ctx: commands.Context, *, filme: str):
-        if remove_movie_from_list(filme):
+        guild_id = await self._require_guild(ctx)
+        if guild_id is None:
+            return
+
+        is_admin = bool(ctx.author.guild_permissions.administrator)
+        try:
+            remove_movie_from_list(guild_id, filme, ctx.author.id, is_admin)
             await ctx.send(f'🗑️ "**{filme}**" removido com sucesso!')
-        else:
+        except PermissionDeniedError:
+            await ctx.send(
+                f'⚠️ Você não tem permissão para remover "**{filme}**".',
+                ephemeral=True,
+            )
+        except MovieNotFoundError:
             await ctx.send(f'⚠️ "**{filme}**" não encontrado na lista.', ephemeral=True)
 
     # ── /assistido ───────────────────────────────────────────────────────────
@@ -163,23 +228,36 @@ class MovieCommands(commands.Cog):
     @commands.hybrid_command(name="assistido", description="Marca um filme como assistido")
     @app_commands.describe(filme="Nome do filme a marcar")
     async def assistido(self, ctx: commands.Context, *, filme: str):
-        if mark_movie_as_watched(filme):
+        guild_id = await self._require_guild(ctx)
+        if guild_id is None:
+            return
+
+        try:
+            mark_movie_as_watched(guild_id, filme)
             await ctx.send(f'✅ "**{filme}**" marcado como assistido!')
-        else:
+        except MovieNotFoundError:
             await ctx.send(f'⚠️ "**{filme}**" não encontrado na lista.', ephemeral=True)
 
     # ── /sortear ─────────────────────────────────────────────────────────────
 
     @commands.hybrid_command(name="sortear", description="Sorteia um filme não assistido")
     async def sortear(self, ctx: commands.Context):
-        sorteado = suggest_unwatched_movie()
-        if not sorteado:
+        guild_id = await self._require_guild(ctx)
+        if guild_id is None:
+            return
+
+        try:
+            sorteado = suggest_unwatched_movie(guild_id)
+        except NoUnwatchedMoviesError:
             await ctx.send("⚠️ Todos os filmes já foram assistidos! Adicione mais.", ephemeral=True)
             return
 
         embed = discord.Embed(
             title="🎲 Filme Sorteado!",
-            description=f'**{sorteado["title"]}**\nAdicionado por {sorteado["added_by"]}',
+            description=(
+                f'**{sorteado["title"]}**\n'
+                f"Adicionado por {self._added_by_text(sorteado)}"
+            ),
             color=discord.Color.gold(),
         )
         if sorteado.get("poster"):
@@ -193,9 +271,10 @@ class MovieCommands(commands.Cog):
     @app_commands.describe(filme="Nome do filme")
     async def infofilme(self, ctx: commands.Context, *, filme: str):
         await ctx.defer()
-        detalhes = get_movie_details_by_title(filme)
 
-        if not detalhes:
+        try:
+            detalhes = get_movie_details_by_title(filme)
+        except MovieDetailsNotFoundError:
             await ctx.send(f'⚠️ Não encontrei detalhes para "**{filme}**".', ephemeral=True)
             return
 
