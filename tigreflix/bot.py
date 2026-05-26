@@ -1,34 +1,47 @@
+import asyncio
+import logging
 import os
+
 import discord
 from discord.ext import commands
+
 from tigreflix.config import TOKEN
 from tigreflix.database import init_db
-import asyncio
 
-# ✅ Define intents correctly
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+
 intents = discord.Intents.default()
 intents.message_content = True
 
-# ✅ Create bot instance
 bot = commands.Bot(command_prefix="!", intents=intents)
+
 
 @bot.event
 async def on_ready():
-    await bot.tree.sync()  # Sync commands
-    print(f"🤖 Bot {bot.user} is online!")
+    try:
+        synced = await bot.tree.sync()
+        logging.info(f"🤖 {bot.user} online | {len(synced)} comandos sincronizados.")
+    except Exception as e:
+        logging.error(f"Erro ao sincronizar comandos: {e}")
 
-# ✅ Load all Cogs dynamically from 'cogs' folder
+
 async def load_extensions():
-    for filename in os.listdir("./tigreflix/cogs"):
-        if filename.endswith(".py"):  # Only load .py files
-            await bot.load_extension(f"tigreflix.cogs.{filename[:-3]}")  # Remove '.py'
+    cogs_dir = os.path.join(os.path.dirname(__file__), "cogs")
+    for filename in os.listdir(cogs_dir):
+        if filename.endswith(".py") and not filename.startswith("_"):
+            ext = f"tigreflix.cogs.{filename[:-3]}"
+            await bot.load_extension(ext)
+            logging.info(f"✅ Cog carregado: {ext}")
 
-# ✅ Main function to start bot
+
 async def main():
     async with bot:
-        init_db()  # Ensure database is initialized
-        await load_extensions()  # Load all commands
+        init_db()
+        await load_extensions()
         await bot.start(TOKEN)
 
-# ✅ Start bot properly
+
 asyncio.run(main())
